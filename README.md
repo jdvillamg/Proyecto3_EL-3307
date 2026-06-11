@@ -224,14 +224,43 @@ Se realiza un ejemplo similar pero ahora con números de tres digitos. Se coloca
 ## 7. Análisis de consumo de recursos y potencia 
 Tras el proceso de síntesis y mapeo en la FPGA Tang Nano 9k, utilizando el flujo de herramientas de OSS CAD Suite, se obtuvieron los siguientes resultados para una frecuencia objetivo de 27.00 MHz:
 
-### 7.1 Utilización de Recursos Lógicos
-| Recurso | Usado | Disponible | Uso (%) |
-| :--- | :---: | :---: | :---: |
-| **SLICE** (Lógica combinacional y registros) | 770 | 8640 | 8% |
-| **IOB** (Pines de Entrada/Salida) | 21 | 274 | 7% |
-| **MUX2_LUT5** | 46 | 4320 | 1% |
-| **MUX2_LUT6 a LUT8** | 22 | 4302 | ~0% |
 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+## Análisis de Recursos y Síntesis
+
+### Utilización Física del Dispositivo (Place & Route)
+
+Esta tabla refleja el impacto del diseño sobre los bloques físicos disponibles en la FPGA. El diseño es sumamente eficiente, ocupando aproximadamente un 10% de la capacidad total del chip.
+
+| Recurso de la FPGA | Usado | Disponible | Utilización |
+| :--- | :---: | :---: | :---: |
+| **SLICE** (Celdas Lógicas) | 936 | 8640 | `10.83%` |
+| **IOB** (Pines de Entrada/Salida) | 22 | 274 | `8.03%` |
+| **MUX2_LUT5** (Multiplexores de 5 entradas) | 96 | 4320 | `2.22%` |
+| **MUX2_LUT6** (Multiplexores de 6 entradas) | 29 | 2160 | `1.34%` |
+| **MUX2_LUT7** (Multiplexores de 7 entradas) | 9 | 1080 | `0.83%` |
+| **MUX2_LUT8** (Multiplexores de 8 entradas) | 2 | 1056 | `0.19%` |
+| **GSR** (Global Set/Reset) | 1 | 1 | `100.00%` |
+| **RAMW** (Bloques de Memoria BRAM) | 0 | 270 | `0.00%` |
+| **OSC / rPLL** (Relojes integrados) | 0 | 3 | `0.00%` |
+
+### Desglose de Primitivas Lógicas (Síntesis)
+
+Elementos individuales inferidos por el sintetizador a partir del código SystemVerilog:
+
+| Categoría | Detalle de Componentes | Cantidad | Total |
+| :--- | :--- | :---: | :---: |
+| **Tablas de Búsqueda (LUTs)** | LUT1 (322), LUT2 (177), LUT3 (71), LUT4 (95) | - | **665** |
+| **Registros (Flip-Flops)** | DFFC (37), DFFCE (166), DFFE (2), DFFP (1), DFFPE (14) | - | **220** |
+| **Aritmética** | ALU | 137 | **137** |
+| **Búferes I/O** | Entradas (7), Salidas (15) | - | **22** |
+
+### Notas de Rendimiento
+* **Memoria:** El diseño actual opera puramente con lógica combinacional y Flip-Flops distribuidos, sin requerir el uso de bloques de memoria RAM dedicados.
+* **Frecuencia Máxima (fmax):** El diseño cumple holgadamente con los requisitos de tiempo de la placa base (27.00 MHz), logrando una frecuencia máxima teórica de reloj de **93.26 MHz**.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
 A diferencia de un diseño puramente combinacional, este sistema secuencial reporta un uso del 8% de los bloques lógicos (SLICEs). Este incremento es el esperado por la implementación de las tres Máquinas de Estados Finitas (FSM), los contadores para el barrido y refresco, y los registros de 14 bits para el almacenamiento de los operandos y el resultado. 
 
 Además, el uso de 21 bloques de entrada/salida (IOB) coincide exactamente con la arquitectura del hardware físico: pines para las filas y columnas del teclado matricial, los segmentos y ánodos del display, el Clock y el botón de reinicio. El diseño es eficiente, dejando más del 90% del libre por si se desea hacer expansiones.
