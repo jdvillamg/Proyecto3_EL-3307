@@ -42,26 +42,44 @@ Capacidad de datos: Soporte para un dividendo decimal de hasta 2 dígitos (máxi
 El circuito diseñado constituye una unidad de división entera sincrónica para números decimales sin signo, implementada sobre la arquitectura de la FPGA Tang Nano 9K. El sistema opera bajo un esquema de jerarquía modular, donde un reloj de 27 MHz sincroniza tanto los periféricos de baja velocidad como la lógica aritmética interna. El flujo de datos se inicia con la captura de un dividendo y un divisor desde un teclado hexadecimal matricial, los cuales son procesados y convertidos a su representación binaria. Una vez que el subsistema de lectura valida los operandos mediante la bandera valid, el subsistema de cálculo ejecuta el algoritmo iterativo de división entera mediante una arquitectura con pipeline de 4 etapas, reduciendo el camino crítico para operar a la frecuencia requerida. Al concluir la operación, se emite la bandera done y el cociente o residuo resultante es convertido a formato BCD para su despliegue dinámico en los displays de 7 segmentos, con posibilidad de seleccionar entre ambos resultados mediante una entrada dedicada.
 
 ### 4.2 Descripción de cada subsistema y su diagrama de bloques
-1. Subsistema de Lectura de Teclado Hexadecimal: 
+1. Subsistema de Lectura: 
 Este subsistema tiene la función crítica de actuar como interfaz entre los elementos analógicos/mecánicos y el núcleo digital. Su objetivo es convertir la pulsación de las teclas en un valores binarios únicos y estables.
 
 ![Lectura](./Imagenes/Subsistema_de_Lectura.png)
 
-Debido a que los contactos metálicos del teclado oscilan antes de estabilizarse, el debouncer o filtro antirrebote utiliza un registro de desplazamiento para muestrear la señal de las columnas. Solo cuando la señal se mantiene constante durante varios ciclos de tick_en, el filtro emite un valor limpio, eliminando falsos disparos. El barrido es un contador de anillo que genera un cero caminante en las filas del teclado. Al poner una fila en nivel bajo (0) de forma secuencial, permite identificar cuál tecla se ha cerrado al monitorear las columnas. El decodificador es el bloque de lógica combinacional que asocia la coordenada (Fila, Columna) con un valor de 4 bits (0-F). Su función fundamental es el mapeo lógico de la matriz física al lenguaje hexadecimal. Por último, el detector de flanco es el elemento que asegura que, aunque una tecla se mantenga presionada por mucho tiempo, el sistema solo registre la pulsación una vez. Genera un pulso de un solo ciclo de reloj que activa el resto de la lógica del sistema.
+Debido a que los contactos metálicos del teclado oscilan antes de estabilizarse, el debouncer o filtro antirrebote utiliza un registro de desplazamiento para muestrear la señal de las columnas. Solo cuando la señal se mantiene constante durante varios ciclos de tick_en, el filtro emite un valor limpio, eliminando falsos disparos. 
 
-2. Subsistema de Suma Aritmética:
-El subsistema representa el procesado de la suma. Separa la lógica de decisión (Control) de las operaciones matemáticas (Ruta de Datos).
+![Lectura1](./Imagenes/debouncer.png)
 
-![Suma](./Imagenes/Subsistema_de_Suma.png)
+El barrido es un contador de anillo que genera un cero caminante en las filas del teclado. Al poner una fila en nivel bajo (0) de forma secuencial, permite identificar cuál tecla se ha cerrado al monitorear las columnas. El decodificador es el bloque de lógica combinacional que asocia la coordenada (Fila, Columna) con un valor de 4 bits (0-F). Su función fundamental es el mapeo lógico de la matriz física al lenguaje hexadecimal. Por último, el detector de flanco es el elemento que asegura que, aunque una tecla se mantenga presionada por mucho tiempo, el sistema solo registre la pulsación una vez. Genera un pulso de un solo ciclo de reloj que activa el resto de la lógica del sistema.
 
-La unidad de control se compone de una FSM que controla las fases del procesado. Transita entre los estados de ingreso de operandos (ST_NUM1, ST_NUM2) y el estado de resultado. Envía señales de habilitación (enables) a los registros para controlar exactamente en qué momento se guarda la información. Los registros de almacenamiento son arreglos de flip-flops que mantienen los números estables. Sin estos, el valor del teclado desaparece al soltar la tecla. Por otra parte, el bloque acumulador implementa la lógica decimal de entrada. Al multiplicar el valor previo por 10 y sumar el nuevo dígito, permite que el usuario ingrese números de varias cifras; por ejemplo, al presionar '1' y luego '2', el sistema calcula $1 \times 10 + 2 = 12$). Para el sumador, este es un componente combinacional que realiza la operación aritmética central ($A + B$). Al estar conectado directamente a las salidas de los registros de operandos, calcula la suma de manera continua, la cual es capturada en el registro de resultado cuando la FSM recibe la orden (tecla 'A'). El multiplexor actúa como un selector. Según el estado de la FSM, decide si el bus que va hacia la pantalla transporta el primer número, el segundo número o el resultado final.
+![Lectura2](./Imagenes/barridoydeco.png)
 
-3. Subsistema de Despliegue (Display de 7 Segmentos)
+2. Subsistema  de cálculo de la división entera:
+Este subsistema tiene la función crítica de administrar la interfaz de usuario para la captura de operandos y ejecutar de manera segura el algoritmo matemático de la división entera en hardware. Su objetivo es recibir las pulsaciones del teclado, consolidar numéricamente el dividendo A y el divisor B, procesar la operación aritmética de forma síncrona y coordinar la entrega estable de los resultados (cociente Q y residuo R) hacia la etapa de visualización.
+
+![Division](./Imagenes/SubsistemaDeDivision.png)
+
+Debido a que el usuario introduce los datos dígito por dígito en base decimal, el control de división es una FSM que acumula los valores multiplicándolos sucesivamente por 10. Para garantizar la integridad del hardware, este bloque implementa comparadores de límites dinámicos que restringen las magnitudes a un rango estricto de 7 bits para el dividendo (máximo 127) y 5 bits para el divisor (máximo 31). Una vez validados y confirmados los operandos, se inicia un protocolo de comunicación mediante la bandera div_valid para utilizar el núcleo matemático. 
+
+Aqui falta imagen
+
+El divisor es el modulo aritmético del subsistema y opera mediante una FSM dedicada que ejecuta el algoritmo de desplazamiento y resta sucesiva en 7 ciclos de reloj. Utiliza un registro integrado de 13 bits (RQ) que fusiona el residuo parcial y el cociente en formación. En cada ciclo, una unidad restadora combinacional evalúa si el divisor cabe en el residuo temporal inspeccionando el bit de signo del resultado; con base en este bit, se decide si se resta el valor y se inserta un '1' o un '0' en el cociente. El diseño incluye además un bloque de protección contra división por cero que aborta el ciclo iterativo instantáneamente si el divisor es nulo, asignando el valor máximo al cociente y levantando de inmediato la bandera done para notificar que el resultado es estable y seguro de desplegar.
+
+![Division2](./Imagenes/divisor.png)
+
+
+
+
+3. Subsistema de conversión de binario a representación BCD y viceversa
 Este último subsistema consiste en la interfaz de salida. Este subsistema gestiona la potencia y el despliegue de la información mediante multiplexación temporal.
 
 ![Suma](./Imagenes/Subsistema_de_Despliegue.png)
 
 Dado que la suma se realiza en binario, el convertidor es fundamental para separar el número en unidades, decenas, centenas y millares (si fuera necesario). Transforma un valor de hasta 14 bits en cuatro grupos de 4 bits independientes. El contador de refresco genera un índice cíclico a una frecuencia de aproximadamente 1 kHz. Este índice determina qué posición del display se está atendiendo en cada microsegundo. El multiplexor toma los cuatro dígitos del convertidor BCD y, sincronizado con el contador de refresco, selecciona cuál dígito enviar al decodificador de segmentos. El decodificador de ánodos toma el índice del contador y activa físicamente el pin que energiza el display correspondiente. Esto asegura que el dígito de las "unidades" solo se encienda en la posición de las unidades. Por último, mediante el decodificador de segmentos, la tabla de verdad convertida a hardware traduce el número de 4 bits al patrón de encendido de los ledes necesarios para dibujar el número.
+
+4. Subsistema de despliegue en display de 7 segmentos.
+
 
 ## 5. Máquinas de Estados Finitos / Finite State Machines (FSMs) implementadas
 El comportamiento secuencial del sistema está bajo el control de tres Máquinas de Estados Finitas (FSM) que operan de manera concurrente para gestionar la captura, el procesamiento y la validación de los datos.
