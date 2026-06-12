@@ -6,43 +6,40 @@
 ## 1. Abreviaturas y definiciones
 * FPGA: Field Programmable Gate Arrays
 * FSM: Finite State Machine
+* BCD: Binary Coded Decimal
 
 ## 2. Introducción
 El diseño de sistemas digitales requiere habilidad de implementación de algoritmos por medio de circuitos lógicos. Muchos algoritmos en la práctica usan iteraciones, segmentación (pipelining) o bucles que a la hora de traducirlos a implementaciones de lógica booleana, surge la necesidad de un control lógico que habilite el
-correcto flujo de datos en circuito. Asimismo, las interfaces de bloque a bloque se diseñan con protocolos de bus para ayudar a estandarizar la comunicación entre unidades. Estos protocolos de bus facilitan las pruebas unitarias sobre bloques porque toda unidad se puede controlar de una manera similar. En este proyecto busca introducir la implementación de algoritmos al estudiante, por medio del diseño de una unidad de cálculo de división de enteros. Y de la misma forma, esta unidad deberá respetar un protocolo de bus para su correcto funcionamiento.
+correcto flujo de datos en circuito. Asimismo, las interfaces de bloque a bloque se diseñan con protocolos de bus para ayudar a estandarizar la comunicación entre unidades. Estos protocolos de bus facilitan las pruebas unitarias sobre bloques porque toda unidad se puede controlar de una manera similar.
 
-Este proyecto consiste en el diseño e implementación de un sistema digital sincrónico capaz de realizar sumas de números enteros positivos de tres cifras. Utilizando el HDL SystemVerilog y la FPGA TangNano 9k, se desarrolló un sumador que captura datos desde un teclado hexadecimal, procesa la suma aritmética de dos operandos de tres dígitos y despliega el resultado de manera dinámica en un display de 7 segmentos de cuatro dígitos. El diseño integra técnicas de sincronización de señales asincrónicas, eliminación de rebotes (debouncing) y el uso de máquinas de estados finitos para orquestar el flujo de datos.
+El proyecto consiste en diseñar e implementar en una FPGA (TangNano 9K) una unidad de división de enteros sin signo, usando SystemVerilog. La unidad toma un dividendo de hasta 6 bits (máximo 63) y un divisor de hasta 4 bits (máximo 15), y entrega el cociente y el residuo. El sistema se divide en cuatro subsistemas encadenados: lectura de datos; cálculo de la división; conversión binario a BCD; y despliegue en 7 segmentos.
 
 ## 3. Definición del problema, Objetivos y Especificaciones
 ### 3.1 Definición del problema 
-En el diseño de sistemas digitales, la interfaz entre componentes asincrónicos y la lógica interna de alta velocidad de una FPGA representa un problema crucial de sincronización. Se requiere desarrollar un circuito que capture manualmente dos números decimales de al menos tres dígitos cada uno, realice la suma aritmética de los mismos y visualice, tanto el ingreso de datos como el resultado final en el display de 4 dígitos, garantizando la estabilidad de las señales ante el ruido mecánico.
+En el diseño de sistemas digitales, la implementación de operaciones aritméticas complejas como la división entera representa un reto significativo, dado que, a diferencia de una suma, no existe una solución combinacional trivial de bajo costo. Se requiere desarrollar un circuito que capture manualmente un dividendo y un divisor en formato decimal desde un teclado hexadecimal, ejecute el algoritmo de división entera sin signo mediante una arquitectura con pipeline, y visualice tanto el cociente como el residuo en un display de 7 segmentos, garantizando la correcta sincronización entre subsistemas mediante señales de control y el manejo adecuado de ruido mecánico en las entradas.
 
 ### 3.2 Objetivos
-* Objetivo General: Introducir al estudiante al desarrollo de un sistema digital utilizando lenguajes de descripción de hardware.
+* Objetivo General: Introducir al estudiante a la implementación de algoritmos por medio de máquinas de estados complejas
 * Objetivos específicos:
-  1. Medir mediante un analizador lógico la salida de un dispositivo secuencial sencillo.
-  2. Evaluar la funcionalidad de un contador sincrónico integrado.
-  3. Diseñar un cerrojo o latch Set-Reset a partir de lógica combinacional integrada.
-  4. Evaluar los tiempos de funcionalidad de un flip-flop D integrado.
-  5. Elaborar una implementación de un diseño digital sincrónico en una FPGA.
-  6. Construir un testbench básico para validar las especificaciones del diseño.
-  7. Comprender los conceptos de sincronización de datos asincrónicos.
-  8. Implementar un algoritmo de captura de datos de un teclado hexadecimal.
-  9. Implementar una sencilla función de suma aritmética en un HDL.
-  10. Implementar un algoritmo de despliegue de datos en cuatro dispositivos de 7 segmentos.
-  11. Coordinación de trabajo en equipo mediante el uso de herramientas de control de versiones.
-  12. Practicar planificación de tareas para trabajo de grupo.
+  1. Elaborar una implementación de un diseño digital en una FPGA.
+  2. Construir un testbench básico para validar las especificaciones del diseño.
+  3. Implementar un algoritmo de división de enteros con una Máquina de estados con técnicas avanzadas.
+  4. Coordinación de trabajo en equipo mediante el uso de herramientas de control de versiones.
+  5. Practicar planificación de tareas para trabajo de grupo
 
 ### 3.3 Especificaciones 
-* Frecuencia de Reloj: El sistema debe operar exclusivamente a la frecuencia de 27 MHz provista por la TangNano 9k. También, el sistema debe operar bajo un único relog.
-* Lenguaje de Descripción: SystemVerilog; siguiendo la metodología y especificaciones del curso.
-* Sincronización: Todas las entradas externas deben registrarse y pasar por un proceso de debouncing para evitar estados metaestables.
-* Capacidad de Datos: Soporte para dos números de tres dígitos decimales positivos.
-* Visualización: Despliegue dinámico mediante multiplexado en displays de cátodo común alimentados por 4 ánodos.
+* Frecuencia de reloj: El sistema debe operar exclusivamente a la frecuencia de 27 MHz provista por la TangNano 9K. Solo se permite un único reloj en todo el diseño; las bases de tiempo más lentas deben derivarse mediante divisores de frecuencia.
+Lenguaje de descripción: SystemVerilog, siguiendo la metodología y estilo de codificación definidos en el curso, incluyendo el formato estipulado para máquinas de estados finitos (FSM).
+* Sincronización: Todas las entradas externas deben registrarse y pasar por un proceso de debouncing para evitar metaestabilidad y rebotes mecánicos.
+Capacidad de datos: Soporte para un dividendo decimal de hasta 2 dígitos (máximo 63, representable en 6 bits) y un divisor decimal de 1 dígito (máximo 15, representable en 4 bits).
+* Algoritmo de división: Implementación del algoritmo iterativo de división por resta sucesiva descrito en el material "Digital Design and Computer Architecture: ARM Edition" de Harris & Harris, sección 5.2.7, con arquitectura en pipeline de 4 etapas para cumplir con el requisito de velocidad de 27 MHz.
+* Señales de control entre subsistemas: El subsistema de lectura debe emitir una bandera valid al subsistema de cálculo cuando los operandos sean estables; el subsistema de cálculo debe emitir una bandera done al subsistema de despliegue cuando el resultado sea estable.
+* Visualización: Despliegue del cociente o residuo en display de 7 segmentos, con selección entre ambos resultados mediante una tecla del teclado o botón dedicado. El manejo de los displays debe realizarse a través de transistores, no directamente desde los pines de la FPGA.
+* Conversión de formato: El resultado binario debe convertirse a BCD antes del despliegue, utilizando el subsistema desarrollado en el proyecto corto II.
 
  ## 4. Desarrollo
  ### 4.1 Descripción general del funcionamiento 
-El circuito diseñado constituye un calculador digital sincrónico para números decimales de tres dígitos, implementado sobre la arquitectura de la FPGA Tang Nano 9k. El sistema opera bajo un esquema de jerarquía modular, donde un Clock de 27 MHz es procesado para sincronizar periféricos de baja velocidad y lógica aritmética de alta velocidad. El flujo de datos se inicia con la captura de señales mecánicas en un teclado matricial, las cuales son procesadas por una FSM que gestiona el almacenamiento en registros y la ejecución de sumas, finalizando con el despliegue dinámico de los resultados en un arreglo de displays de 7 segmentos.
+El circuito diseñado constituye una unidad de división entera sincrónica para números decimales sin signo, implementada sobre la arquitectura de la FPGA Tang Nano 9K. El sistema opera bajo un esquema de jerarquía modular, donde un reloj de 27 MHz sincroniza tanto los periféricos de baja velocidad como la lógica aritmética interna. El flujo de datos se inicia con la captura de un dividendo y un divisor desde un teclado hexadecimal matricial, los cuales son procesados y convertidos a su representación binaria. Una vez que el subsistema de lectura valida los operandos mediante la bandera valid, el subsistema de cálculo ejecuta el algoritmo iterativo de división entera mediante una arquitectura con pipeline de 4 etapas, reduciendo el camino crítico para operar a la frecuencia requerida. Al concluir la operación, se emite la bandera done y el cociente o residuo resultante es convertido a formato BCD para su despliegue dinámico en los displays de 7 segmentos, con posibilidad de seleccionar entre ambos resultados mediante una entrada dedicada.
 
 ### 4.2 Descripción de cada subsistema y su diagrama de bloques
 1. Subsistema de Lectura de Teclado Hexadecimal: 
