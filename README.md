@@ -62,23 +62,26 @@ Este subsistema tiene la función crítica de administrar la interfaz de usuario
 
 Debido a que el usuario introduce los datos dígito por dígito en base decimal, el control de división es una FSM que acumula los valores multiplicándolos sucesivamente por 10. Para garantizar la integridad del hardware, este bloque implementa comparadores de límites dinámicos que restringen las magnitudes a un rango estricto de 7 bits para el dividendo (máximo 127) y 5 bits para el divisor (máximo 31). Una vez validados y confirmados los operandos, se inicia un protocolo de comunicación mediante la bandera div_valid para utilizar el núcleo matemático. 
 
-Aqui falta imagen
+![Division1](./Imagenes/controldivision.png)
 
 El divisor es el modulo aritmético del subsistema y opera mediante una FSM dedicada que ejecuta el algoritmo de desplazamiento y resta sucesiva en 7 ciclos de reloj. Utiliza un registro integrado de 13 bits (RQ) que fusiona el residuo parcial y el cociente en formación. En cada ciclo, una unidad restadora combinacional evalúa si el divisor cabe en el residuo temporal inspeccionando el bit de signo del resultado; con base en este bit, se decide si se resta el valor y se inserta un '1' o un '0' en el cociente. El diseño incluye además un bloque de protección contra división por cero que aborta el ciclo iterativo instantáneamente si el divisor es nulo, asignando el valor máximo al cociente y levantando de inmediato la bandera done para notificar que el resultado es estable y seguro de desplegar.
 
 ![Division2](./Imagenes/divisor.png)
-
-
-
 
 3. Subsistema de conversión de binario a representación BCD y viceversa
 Este último subsistema consiste en la interfaz de salida. Este subsistema gestiona la potencia y el despliegue de la información mediante multiplexación temporal.
 
 ![Suma](./Imagenes/Subsistema_de_Despliegue.png)
 
-Dado que la suma se realiza en binario, el convertidor es fundamental para separar el número en unidades, decenas, centenas y millares (si fuera necesario). Transforma un valor de hasta 14 bits en cuatro grupos de 4 bits independientes. El contador de refresco genera un índice cíclico a una frecuencia de aproximadamente 1 kHz. Este índice determina qué posición del display se está atendiendo en cada microsegundo. El multiplexor toma los cuatro dígitos del convertidor BCD y, sincronizado con el contador de refresco, selecciona cuál dígito enviar al decodificador de segmentos. El decodificador de ánodos toma el índice del contador y activa físicamente el pin que energiza el display correspondiente. Esto asegura que el dígito de las "unidades" solo se encienda en la posición de las unidades. Por último, mediante el decodificador de segmentos, la tabla de verdad convertida a hardware traduce el número de 4 bits al patrón de encendido de los ledes necesarios para dibujar el número.
+Dado que la operación se realiza en binario, el convertidor es fundamental para separar el número en unidades, decenas, centenas y millares (si fuera necesario). Transforma un valor de hasta 14 bits en cuatro grupos de 4 bits independientes. El contador de refresco genera un índice cíclico a una frecuencia de aproximadamente 1 kHz. Este índice determina qué posición del display se está atendiendo en cada microsegundo. El multiplexor toma los cuatro dígitos del convertidor BCD y, sincronizado con el contador de refresco, selecciona cuál dígito enviar al decodificador de segmentos. El decodificador de ánodos toma el índice del contador y activa físicamente el pin que energiza el display correspondiente. Esto asegura que el dígito de las "unidades" solo se encienda en la posición de las unidades. Por último, mediante el decodificador de segmentos, la tabla de verdad convertida a hardware traduce el número de 4 bits al patrón de encendido de los ledes necesarios para dibujar el número.
 
 4. Subsistema de despliegue en display de 7 segmentos.
+
+
+
+
+
+
 
 
 ## 5. Máquinas de Estados Finitos / Finite State Machines (FSMs) implementadas
