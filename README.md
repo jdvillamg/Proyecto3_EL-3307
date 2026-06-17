@@ -162,8 +162,7 @@ Esta máquina de estados finitos controla el núcleo aritmético del divisor. En
 
 * `DONE` (Resultado estable): Una vez terminadas las iteraciones, el cociente final se toma de la parte baja del registro `RQ` y el residuo final de la parte alta. La bandera `done` se activa para indicar que los resultados son válidos y pueden ser enviados al subsistema de despliegue. El sistema permanece en este estado hasta que la señal `valid` vuelva a cero, momento en el cual la FSM retorna al estado `IDLE` y queda lista para una nueva operación.
 
-![Control](./Imagenes/FSM1.png)
-
+![Control](./Imagenes/divisor.png)
 
 2. FSM Barrido de Matriz:
 
@@ -191,7 +190,7 @@ Máquina de estados cíclica y autónoma diseñada para la exploración secuenci
 En cada ciclo del reloj base (o tick de habilitación), la FSM avanza al siguiente estado, desplazando un cero lógico (0) por los pines de salida conectados a las filas.
 Si el decodificador detecta un nivel lógico bajo en alguna de las columnas (indicando que una tecla fue presionada), la FSM suspende temporalmente sus transiciones de estado. Congela la fila activa para permitir que el filtro antirrebote estabilice la lectura sin perder la coordenada espacial del botón presionado.
 
-![Barrido](./Imagenes/FSM2.png)
+![Barrido](./Imagenes/barridoydeco.png)
 
 3. FSM de Detección de Flanco Positivo:
 
@@ -244,7 +243,7 @@ Una FSM más pequeña, de dos estados, que funciona como un filtro temporal que 
 * Espera: El registro de memoria (prev_pressed) se encuentra en 0. El sistema monitorea la señal proveniente del filtro antirrebote. Al detectar un cambio a nivel alto, la salida de validación (tecla_valida) se dispara a 1 y la FSM transita al siguiente estado.
 * Pulsado: El registro memoriza que la tecla ya fue procesada (prev_pressed = 1). En este estado, la señal de validación se fuerza inmediatamente a 0, previniendo múltiples lecturas accidentales del mismo dígito. El sistema permanece bloqueado en este estado hasta que el usuario libere físicamente el botón, momento en el cual transita de vuelta al estado de espera.
 
-![Detección](./Imagenes/FSM3.png)
+![Detección](./Imagenes/debouncer.png)
 
 ## 6. Simulación funcional del sistema
 
@@ -252,7 +251,7 @@ Para verificar la correctitud del sistema, se desarrolló un entorno de pruebas 
 
 A continuación, se presenta el análisis de la simulación funcional, dividiendo la operación en las fases principales del sistema:
 
-![Simulación del divisor](./Imagenes/Testbench.jpeg)
+![Simulación del divisor](./Imagenes/Ondas%20Testbench.png)
 
 ### 6.1 Condiciones Iniciales y Reinicio (Reset)
 
